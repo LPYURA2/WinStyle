@@ -1,0 +1,7 @@
+LIBRARY export_cases
+EXPORTS
+  alpha=demo @3
+  beta=demo @5
+  hidden=demo @9 NONAME
+  redirected=dependency.demo @11
+  ordinal_redirect=dependency.#1 @12
