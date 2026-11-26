@@ -18,14 +18,14 @@ class Section:
     @property
     def span(self): return max(self.virtual_size,self.raw_size)
 class Image:
-    def __init__(self,b):
+    def __init__(self,b,*,allow_dll=False):
         self.b=b; self.sections=[]; self.dirs=[]; self.imports=[]; self.reloc_count=0; self.unchecked=[]; self.string_bytes=0
         require(len(b)<=MAX_FILE,'file limit')
         require(self.read(0,2)==b'MZ','DOS magic')
         p=self.u32(60); require(p>=64,'PE offset'); require(self.read(p,4)==b'PE\0\0','PE signature')
         machine,n,_,sym,nsym,osz,flags=self.unpack('<HHIIIHH',p+4)
         support(machine==0x8664,'machine is not AMD64'); require(1<=n<=96,'section count')
-        require(flags&2,'not executable'); support(not flags&0x3000,'system image or DLL'); support(not flags&0x100,'32-bit flag')
+        require(flags&2,'not executable'); support(not flags&0x1000 and (allow_dll or not flags&0x2000),'system image or DLL'); self.is_dll=bool(flags&0x2000); support(not flags&0x100,'32-bit flag')
         support(sym==nsym==0,'COFF symbol table')
         self.flags=flags; o=p+24; self.read(o,osz); require(osz>=112,'optional header size')
         support(self.u16(o)==0x20b,'not PE32+'); self.entry=self.u32(o+16); self.base=self.u64(o+24)
@@ -48,8 +48,9 @@ class Image:
             self.sections.append(section)
         self.no_overlap([(s.rva,s.rva+align(s.span,sa)) for s in self.sections],'virtual overlap')
         self.no_overlap([(s.raw_offset,s.raw_offset+s.raw_size) for s in self.sections if s.raw_size],'raw overlap')
-        epsec=self.section(self.entry,1); require(epsec.flags&0x20000000,'entry not executable'); self.rva(self.entry,1)
-        require(self.entry-epsec.rva<(epsec.virtual_size or epsec.raw_size),'entry in padding')
+        if self.entry or not self.is_dll:
+            epsec=self.section(self.entry,1); require(epsec.flags&0x20000000,'entry not executable'); self.rva(self.entry,1)
+            require(self.entry-epsec.rva<(epsec.virtual_size or epsec.raw_size),'entry in padding')
         for i in range(nd):
             r,z=self.unpack('<II',o+112+8*i); require(bool(r)==bool(z),'half-empty directory')
             self.dirs.append((r,z))
