@@ -1,4 +1,9 @@
-# WinStyle — WS-02B3
-Цель: скачал → установил → запустил → работаешь. WinStyle — отдельная штатная среда исполнения рядом с .tea, независимое обновление и общий интерфейс StyleOS.
-[Единая точка входа](docs/PROJECT.md) · [Состояние](docs/STATE.md) · [Точка продолжения](docs/NEXT.md) · [Будущая интеграция](docs/INTEGRATION.md).
-База WS-02B2: 90/90, CI 45970337644. Первый коммит WS-02B3 62753a8: CI 45972387545 SUCCESS, 106/106, 40192 прежних fuzz-входов. Расширены тесты графов и модели размещения: 8 новых, ожидаемо 114; новый CI ещё проверить. Подробнее [отчёт](docs/WS02B3.md). Не запускать сторонние EXE/DLL, модель не записывает IAT. Linux x86-64, Python 3.10+, clang/lld, GCC, objdump: sh run.sh; sh run_sanitizers.sh. StyleOS, ядро и LPYURA2/OS не трогать. Main остаётся на проверенной базе.
+# WinStyle
+Независимая штатная среда Windows-приложений рядом с .tea в будущей StyleOS. **Скачал → установил → запустил → работаешь.** Пока лабораторный прототип.
+## Единая точка входа
+[PROJECT](docs/PROJECT.md) → [AGENTS](AGENTS.md) → [STATE](docs/STATE.md) → [NEXT](docs/NEXT.md).
+[Концепция](docs/CONCEPT.md) · [Архитектура](docs/ARCHITECTURE.md) · [Интеграция](docs/INTEGRATION.md) · [Дорожная карта](ROADMAP.md) · [История](docs/HISTORY.md).
+## Принятая база
+WS-02B3: статический анализ PE32+ EXE/DLL, экспорты, модель размещения и резолвер зависимостей. Код 6ec426bae707990780888dce8ec0a2fff5ed9040, CI 45972835515 SUCCESS: 114/114, 52408 fuzz-входов. [Отчёт](docs/WS02B3.md).
+Linux x86-64, Python 3.10+, clang, lld-link, gcc, GNU objdump. sh run.sh; sh run_sanitizers.sh. Только собственный WS-01 fixture исполняется. Статический профиль не гарантирует безопасность.
+Main — проверенный код. Работа исключительно в LPYURA2/WinStyle, StyleOS и ядро не трогать.
