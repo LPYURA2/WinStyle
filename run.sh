@@ -15,7 +15,17 @@ lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180100000 /out:build/b
 clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/bridge_root.c -o build/bridge_root.obj
 lld-link /entry:entry /subsystem:console /nodefaultlib /machine:x64 /out:build/bridge_root.exe build/bridge_root.obj build/bridge.lib
 lld-link /dll /noentry /nodefaultlib /machine:x64 /out:build/chain.dll /def:tests/chain.def build/dependency.obj
+# Bootstrap B's import library, then link real A <-> B, without executing either.
+clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/ring_b_stub.c -o build/ring_b_stub.obj
+lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180300000 /out:build/ring_b.dll /implib:build/ring_b.lib build/ring_b_stub.obj
+clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/ring_a.c -o build/ring_a.obj
+lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180200000 /out:build/ring_a.dll /implib:build/ring_a.lib build/ring_a.obj build/ring_b.lib
+clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/ring_b.c -o build/ring_b.obj
+lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180300000 /out:build/ring_b.dll /implib:build/ring_b.lib build/ring_b.obj build/ring_a.lib
+clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/ring_root.c -o build/ring_root.obj
+lld-link /entry:entry /subsystem:console /nodefaultlib /machine:x64 /out:build/ring_root.exe build/ring_root.obj build/ring_a.lib
 python3 -m unittest discover -s tests -v
 python3 tests/fuzz.py
 python3 tests/fuzz_exports.py
 python3 tests/fuzz_models.py
+python3 tests/fuzz_bind.py
