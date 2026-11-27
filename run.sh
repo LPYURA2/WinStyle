@@ -11,7 +11,7 @@ lld-link /dll /noentry /nodefaultlib /machine:x64 /out:build/export_cases.dll /d
 lld-link /dll /noentry /nodefaultlib /machine:x64 /out:build/cycle.dll /def:tests/cycle.def build/dependency.obj
 # Own DLL that imports another DLL, and an EXE importing that DLL.
 clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/bridge.c -o build/bridge.obj
-lld-link /dll /noentry /nodefaultlib /machine:x64 /out:build/bridge.dll /implib:build/bridge.lib build/bridge.obj build/dependency.lib
+lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180100000 /out:build/bridge.dll /implib:build/bridge.lib build/bridge.obj build/dependency.lib
 clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/bridge_root.c -o build/bridge_root.obj
 lld-link /entry:entry /subsystem:console /nodefaultlib /machine:x64 /out:build/bridge_root.exe build/bridge_root.obj build/bridge.lib
 lld-link /dll /noentry /nodefaultlib /machine:x64 /out:build/chain.dll /def:tests/chain.def build/dependency.obj

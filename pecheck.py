@@ -19,7 +19,7 @@ class Section:
     def span(self): return max(self.virtual_size,self.raw_size)
 class Image:
     def __init__(self,b,*,allow_dll=False):
-        self.b=b; self.sections=[]; self.dirs=[]; self.imports=[]; self.import_refs=[]; self.reloc_count=0; self.unchecked=[]; self.string_bytes=0
+        self.b=b; self.sections=[]; self.dirs=[]; self.imports=[]; self.import_refs=[]; self.import_slots=[]; self.iat_terminators=[]; self.reloc_targets=[]; self.reloc_count=0; self.unchecked=[]; self.string_bytes=0
         require(len(b)<=MAX_FILE,'file limit')
         require(self.read(0,2)==b'MZ','DOS magic')
         p=self.u32(60); require(p>=64,'PE offset'); require(self.read(p,4)==b'PE\0\0','PE signature')
@@ -103,11 +103,12 @@ class Image:
                 require(self.section(table+j*8,8)==ts and self.section(iat+j*8,8)==ins,'thunk crosses section')
                 v=self.u64(self.rva(table+j*8,8)); self.rva(iat+j*8,8)
                 if v==0:
-                    require(self.u64(self.rva(iat+j*8,8))==0,'IAT terminator'); break
+                    require(self.u64(self.rva(iat+j*8,8))==0,'IAT terminator'); self.iat_terminators.append(iat+j*8); break
                 if v>>63:
                     require(v&0x7fffffffffff0000==0,'ordinal reserved bits'); names.append('#'+str(v&65535)); refs.append(v&65535)
                 else:
                     require(v<=0xffffffff,'import name RVA'); self.rva(v,2); symbol=self.string(v+2); names.append(symbol); refs.append(symbol)
+                self.import_slots.append((dll, refs[-1], iat+j*8, v))
             else: raise Rejected('unterminated thunks')
             self.imports.append({'dll':dll,'symbols':names}); self.import_refs.append((dll, tuple(refs)))
         require(done,'unterminated import descriptors')
@@ -122,7 +123,7 @@ class Image:
                 v=self.u16(self.rva(r+pos+j,2)); typ=v>>12
                 if not typ: continue
                 support(typ==10,'relocation type not DIR64'); target=page+(v&4095); self.section(target,8)
-                require(all(x not in targets for x in range(target,target+8)),'overlapping relocations'); targets.update(range(target,target+8)); self.reloc_count+=1
+                require(all(x not in targets for x in range(target,target+8)),'overlapping relocations'); targets.update(range(target,target+8)); self.reloc_targets.append(target); self.reloc_count+=1
             pos+=n
             require(pos<=z,'relocation end')
     def report(self):

@@ -13,10 +13,10 @@ class Layout:
     relocations: int
     execution_allowed: bool = False
 
-def model(raw: bytes, base: int | None = None) -> Layout:
+def model(raw: bytes, base: int | None = None, *, allow_dll: bool = False) -> Layout:
     # Immutable snapshot; validate on every call, do not accept mutable Image metadata.
     require(type(raw) is bytes, 'immutable input required')
-    img = Image(raw)
+    img = Image(raw, allow_dll=allow_dll)
     require(img.headers <= img.size <= MAX_MODEL, 'model size limit')
     base = img.base if base is None else base
     require(type(base) is int and base >= 65536 and base % 65536 == 0
