@@ -11,3 +11,6 @@
 Linux x86-64, Python 3.10+, clang, lld-link, cc, GNU binutils (objdump), GCC для sanitizer. sh run.sh; sh run_sanitizers.sh. Анализ: python3 peexports.py build/export_cases.dll. Произвольные EXE и DLL не исполняются. Разрешён только собственный лабораторный fixture WS-01. Статический профиль не означает безопасность. Не проверены связывание, разрешение цепочек forwarder, полный Windows API и интеграция.
 
 Работа только LPYURA2/WinStyle. StyleOS, Style Kernel и LPYURA2/OS не трогать.
+
+## Исправление переносимости
+CI 45908332665 для 83c2705: FAIL, 86/88. Два теста зависели от версии инструментов: номера forwarder в LLD и формат имён в objdump. Проверяем forwarder по имени, адреса/ordinal и имена по независимому выводу с учётом двух форматов. Добавлены два теста форматов. Новый CI пока не подтверждён. Код парсера PE не изменён. Не принимать до успешного CI.
