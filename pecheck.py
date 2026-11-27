@@ -19,7 +19,7 @@ class Section:
     def span(self): return max(self.virtual_size,self.raw_size)
 class Image:
     def __init__(self,b,*,allow_dll=False):
-        self.b=b; self.sections=[]; self.dirs=[]; self.imports=[]; self.reloc_count=0; self.unchecked=[]; self.string_bytes=0
+        self.b=b; self.sections=[]; self.dirs=[]; self.imports=[]; self.import_refs=[]; self.reloc_count=0; self.unchecked=[]; self.string_bytes=0
         require(len(b)<=MAX_FILE,'file limit')
         require(self.read(0,2)==b'MZ','DOS magic')
         p=self.u32(60); require(p>=64,'PE offset'); require(self.read(p,4)==b'PE\0\0','PE signature')
@@ -95,7 +95,7 @@ class Image:
             if not any(a): done=True; break
             ilt,stamp,forward,name,iat=a; support(stamp==0 and forward==0,'bound/forwarded import descriptor')
             require(name and iat,'missing import fields'); require(iat%8==0 and (ilt or iat)%8==0,'thunk alignment')
-            dll=self.string(name); names=[]; table=ilt or iat
+            dll=self.string(name); names=[]; refs=[]; table=ilt or iat
             # Stay within a single raw-backed section for each table.
             ts=self.section(table,8); ins=self.section(iat,8)
             for j in range(MAX_ITEMS):
@@ -105,11 +105,11 @@ class Image:
                 if v==0:
                     require(self.u64(self.rva(iat+j*8,8))==0,'IAT terminator'); break
                 if v>>63:
-                    require(v&0x7fffffffffff0000==0,'ordinal reserved bits'); names.append('#'+str(v&65535))
+                    require(v&0x7fffffffffff0000==0,'ordinal reserved bits'); names.append('#'+str(v&65535)); refs.append(v&65535)
                 else:
-                    require(v<=0xffffffff,'import name RVA'); self.rva(v,2); names.append(self.string(v+2))
+                    require(v<=0xffffffff,'import name RVA'); self.rva(v,2); symbol=self.string(v+2); names.append(symbol); refs.append(symbol)
             else: raise Rejected('unterminated thunks')
-            self.imports.append({'dll':dll,'symbols':names})
+            self.imports.append({'dll':dll,'symbols':names}); self.import_refs.append((dll, tuple(refs)))
         require(done,'unterminated import descriptors')
     def parse_relocs(self):
         r,z=self.directory(5); require(not self.flags&1,'relocations stripped'); pos=0; targets=set(); entries=0; blocks=0

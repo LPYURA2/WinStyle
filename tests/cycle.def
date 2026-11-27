@@ -1,0 +1,4 @@
+LIBRARY cycle
+EXPORTS
+ a=cycle.b
+ b=cycle.a
