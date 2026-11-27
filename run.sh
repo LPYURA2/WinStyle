@@ -25,6 +25,7 @@ lld-link /dll /noentry /nodefaultlib /machine:x64 /base:0x180300000 /out:build/r
 clang --target=x86_64-pc-windows-msvc -O2 -ffreestanding -fno-stack-protector -c tests/ring_root.c -o build/ring_root.obj
 lld-link /entry:entry /subsystem:console /nodefaultlib /machine:x64 /out:build/ring_root.exe build/ring_root.obj build/ring_a.lib
 sh ws03a/build.sh
+sh ws03b/build.sh
 python3 -m unittest discover -s tests -v
 python3 tests/fuzz.py
 python3 tests/fuzz_exports.py
