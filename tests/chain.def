@@ -1,0 +1,3 @@
+LIBRARY chain
+EXPORTS
+ next=module00.next
